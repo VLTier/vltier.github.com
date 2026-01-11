@@ -400,10 +400,11 @@
                 .slice(0, 8); // Top 8 languages
 
             const maxCount = sortedLanguages[0]?.[1] || 1;
+            const totalReposWithLanguage = repos.filter(r => r.language).length;
 
             let languagesHTML = '<h2>📊 Top Languages</h2>';
             sortedLanguages.forEach(([language, count]) => {
-                const percentage = ((count / repos.filter(r => r.language).length) * 100).toFixed(1);
+                const percentage = ((count / totalReposWithLanguage) * 100).toFixed(1);
                 const width = (count / maxCount) * 100;
                 languagesHTML += `
                     <div class="language-bar">
