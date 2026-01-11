@@ -298,12 +298,22 @@
             try {
                 // Fetch user profile
                 const userResponse = await fetch(`${apiBase}/users/${username}`);
-                if (!userResponse.ok) throw new Error('Failed to fetch user data');
+                if (!userResponse.ok) {
+                    if (userResponse.status === 403) {
+                        throw new Error('API rate limit exceeded. Please try again later.');
+                    }
+                    throw new Error('Failed to fetch user data');
+                }
                 const userData = await userResponse.json();
 
-                // Fetch repositories
+                // Fetch repositories (max 100 for initial display)
                 const reposResponse = await fetch(`${apiBase}/users/${username}/repos?sort=updated&per_page=100`);
-                if (!reposResponse.ok) throw new Error('Failed to fetch repositories');
+                if (!reposResponse.ok) {
+                    if (reposResponse.status === 403) {
+                        throw new Error('API rate limit exceeded. Please try again later.');
+                    }
+                    throw new Error('Failed to fetch repositories');
+                }
                 const reposData = await reposResponse.json();
 
                 return { user: userData, repos: reposData };
@@ -344,6 +354,15 @@
             const totalStars = repos.reduce((sum, repo) => sum + repo.stargazers_count, 0);
             const totalForks = repos.reduce((sum, repo) => sum + repo.forks_count, 0);
             const totalSize = repos.reduce((sum, repo) => sum + repo.size, 0);
+            
+            // Format size in KB, MB, or GB
+            let sizeDisplay;
+            const sizeInMB = totalSize / 1024;
+            if (sizeInMB >= 1024) {
+                sizeDisplay = `${(sizeInMB / 1024).toFixed(1)} GB`;
+            } else {
+                sizeDisplay = `${sizeInMB.toFixed(1)} MB`;
+            }
 
             statsSection.innerHTML = `
                 <div class="stat-card">
@@ -358,7 +377,7 @@
                 </div>
                 <div class="stat-card">
                     <h2>📦 Repository Size</h2>
-                    <div class="stat-value">${(totalSize / 1024).toFixed(1)} MB</div>
+                    <div class="stat-value">${sizeDisplay}</div>
                     <div class="stat-label">Total code storage</div>
                 </div>
             `;
